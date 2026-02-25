@@ -539,8 +539,10 @@
             
             let output = "";
             if (hasPassword) {
-                const b64 = btoa(hexPayload);
-                output += `-- Recovery: lumina://recover?payload=${b64}\n`;
+                // Use Uint8Array directly for cleaner base64
+                const binary = String.fromCharCode.apply(null, scrambled);
+                const b64 = btoa(binary);
+                output += `-- Recovery: lumina://rcv?p=${b64}\n`;
             } else {
                 output += `-- [PERMANENT_LOCK: RECOVERY_VECTOR_DISABLED]\n`;
             }
@@ -551,23 +553,26 @@
 
         function recoverRaw(input, password) {
             try {
-                let hexPayload = "";
-                if (input.includes('lumina://recover?payload=')) {
-                    const b64 = input.split('payload=')[1].split(/\s/)[0].trim();
-                    hexPayload = atob(b64);
+                let bytes = [];
+                if (input.includes('lumina://rcv?p=')) {
+                    const b64 = input.split('p=')[1].split(/\s/)[0].trim();
+                    const binary = atob(b64);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes.push(binary.charCodeAt(i));
+                    }
                 } else if (input.includes('"\\')) {
                     if (!input.includes('lumina://')) {
                         return "-- [SECURITY_FAULT] RECOVERY_DENIED\n-- No Master Key association found in bytecode header.";
                     }
                     const matches = input.match(/"((\\[0-9]+)+)"/);
-                    if (matches) hexPayload = matches[1];
+                    if (matches) {
+                        const hexPayload = matches[1];
+                        const parts = hexPayload.split('\\').filter(x => x !== "");
+                        for (let p of parts) bytes.push(parseInt(p));
+                    }
                 }
 
-                if (!hexPayload) return "-- [FAIL] No Lumina stream detected in input buffer.";
-
-                const bytes = [];
-                const parts = hexPayload.split('\\').filter(x => x !== "");
-                for (let p of parts) bytes.push(parseInt(p));
+                if (bytes.length === 0) return "-- [FAIL] No Lumina stream detected in input buffer.";
 
                 const encryptionKey = password;
                 if (!encryptionKey) return "-- [AUTH_REQUIRED] Provide Master Key to proceed.";
