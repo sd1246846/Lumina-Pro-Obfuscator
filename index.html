@@ -542,7 +542,7 @@
                 // Use Uint8Array directly for cleaner base64
                 const binary = String.fromCharCode.apply(null, scrambled);
                 const b64 = btoa(binary);
-                output += `-- Recovery: lumina://rcv?p=${b64}\n`;
+                output += `-- Recovery or just type the whole script in: lumina://rcv?p=${b64}\n`;
             } else {
                 output += `-- [PERMANENT_LOCK: RECOVERY_VECTOR_DISABLED]\n`;
             }
