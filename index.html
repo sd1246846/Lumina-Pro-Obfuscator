@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMINA // Stealth Luau Protector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --bg-dark: #070708;
+            --accent: #a855f7;
+            --accent-glow: rgba(168, 85, 247, 0.4);
+            --card-bg: rgba(15, 15, 18, 0.85);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 40%),
+                linear-gradient(rgba(168, 85, 247, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(168, 85, 247, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+            color: #e2e8f0;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Advanced Loading Screen --- */
+        #master-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s cubic-bezier(0.77, 0, 0.175, 1), transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        .loader-glitch-wrapper {
+            position: relative;
+            text-align: center;
+        }
+
+        .loader-logo {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            color: white;
+            margin-bottom: 2rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: glitch-skew 4s infinite linear alternate-reverse;
+        }
+
+        .loader-logo i {
+            filter: drop-shadow(0 0 10px var(--accent));
+            animation: bolt-flicker 2s infinite;
+        }
+
+        @keyframes bolt-flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; transform: scale(1); }
+            20%, 24%, 55% { opacity: 0.3; transform: scale(0.95); }
+        }
+
+        .loader-bar-container {
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .loader-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, transparent, var(--accent), #d8b4fe);
+            box-shadow: 0 0 20px var(--accent);
+            transition: width 0.3s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+        }
+
+        .loader-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            color: #a855f7;
+            margin-top: 20px;
+            opacity: 0.8;
+            animation: text-pulse 1.5s infinite;
+        }
+
+        @keyframes text-pulse {
+            0%, 100% { opacity: 0.4; text-shadow: 0 0 0px var(--accent); }
+            50% { opacity: 1; text-shadow: 0 0 8px var(--accent); }
+        }
+
+        /* --- App Styles --- */
+        .reveal-delay {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .reveal-delay.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+
+        .monaco-container {
+            height: 420px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.5);
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            transition: all 0.4s;
+            position: relative;
+        }
+        .tab-btn.active {
+            border-color: #a855f7;
+            color: white;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+
+        .success-glow {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.5) !important;
+        }
+
+        .warning-glow {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.5) !important;
+        }
+
+        /* Scanline effect for loading */
+        .cyber-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(168, 85, 247, 0.02) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        @keyframes glitch-skew {
+            0% { transform: skew(0deg); }
+            20% { transform: skew(0deg); }
+            21% { transform: skew(-5deg); }
+            22% { transform: skew(0deg); }
+            23% { transform: skew(3deg); }
+            25% { transform: skew(0deg); }
+            100% { transform: skew(0deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <!-- Premium Loading Screen -->
+    <div id="master-loader">
+        <div class="cyber-grid"></div>
+        <div class="loader-glitch-wrapper">
+            <div class="loader-logo">
+                <i class="fa-solid fa-bolt-lightning mr-4 text-purple-500"></i>
+                LUMINA
+            </div>
+            <div class="loader-bar-container">
+                <div class="loader-bar-fill" id="loader-progress"></div>
+            </div>
+            <div class="loader-status" id="loader-status">BOOTING_CORE_SYSTEMS</div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-8 reveal-delay" id="header-reveal">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight flex items-center">
+                    <i class="fa-solid fa-bolt-lightning mr-3 text-purple-500"></i>
+                    LUMINA<span class="text-purple-500">STEALTH</span>
+                </h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Advanced Luau Bytecode Protection</p>
+            </div>
+            <nav class="flex space-x-8">
+                <button onclick="switchTab('protect')" id="tab-protect" class="tab-btn active text-xs font-bold uppercase tracking-widest text-slate-500 pb-2">Protect</button>
+                <button onclick="switchTab('unlock')" id="tab-unlock" class="tab-btn text-xs font-bold uppercase tracking-widest text-slate-500 pb-2">Unlock raw</button>
+            </nav>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <aside class="lg:col-span-3 space-y-5 reveal-delay" id="sidebar-reveal">
+                <div class="glass-panel p-6">
+                    <label id="keyLabel" class="text-[10px] font-bold text-slate-500 block mb-4 uppercase tracking-widest">Master Key (Optional)</label>
+                    <div class="relative group">
+                        <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs transition-colors group-focus-within:text-purple-500"></i>
+                        <input type="password" id="passKey" placeholder="Default: none" 
+                            class="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-purple-500 transition-all focus:ring-1 focus:ring-purple-500/30">
+                    </div>
+
+                    <div id="unlockInfo" class="mt-8 pt-6 border-t border-white/5 space-y-4 hidden">
+                        <div class="bg-purple-500/5 border border-purple-500/20 p-4 rounded-xl">
+                            <p class="text-[10px] text-purple-300 font-bold uppercase mb-2">Instructions:</p>
+                            <ol class="text-[11px] text-slate-400 space-y-3 list-inside leading-relaxed">
+                                <li>1. Paste Lumina Link</li>
+                                <li>2. Provide <span class="text-purple-300">Master Key</span></li>
+                                <li>3. Execute <span class="text-white">Unlock</span></li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div id="protectInfo" class="mt-8 pt-6 border-t border-white/5 space-y-4">
+                        <div id="permWarning" class="bg-red-500/5 border border-red-500/20 p-4 rounded-xl mb-2">
+                            <p class="text-[9px] text-red-400 font-bold uppercase mb-1 flex items-center">
+                                <i class="fa-solid fa-triangle-exclamation mr-2"></i> Permanent Mode
+                            </p>
+                            <p class="text-[10px] text-slate-500 leading-relaxed italic">Encryption key will be generated randomly and discarded. Recovery impossible.</p>
+                        </div>
+                        <div class="space-y-3 px-1">
+                            <div class="flex items-center justify-between text-[11px] text-slate-400">
+                                <span>Stealth Level</span>
+                                <span class="text-purple-400 font-mono">MIL-SPEC</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-slate-400">
+                                <span>VM Wrapper</span>
+                                <span class="text-green-500 uppercase font-bold text-[9px]">Active</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-slate-400">
+                                <span>Entropy</span>
+                                <span class="text-purple-400">98.4%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="handleProcess()" id="actionBtn" class="w-full btn-primary py-5 rounded-2xl font-bold text-white flex items-center justify-center space-x-3 group">
+                    <span id="btnText">PROTECT SCRIPT</span>
+                    <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </aside>
+
+            <main class="lg:col-span-9 space-y-6 reveal-delay" id="main-reveal">
+                <div id="inputWrapper" class="glass-panel p-5 transition-all duration-500">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <span id="inputLabel" class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Source_Input</span>
+                        <div class="flex space-x-3">
+                            <span id="autoDetectBadge" class="hidden px-2.5 py-1 rounded-full bg-green-500/10 text-green-400 text-[9px] font-bold uppercase border border-green-500/20">System_Detected</span>
+                            <span id="lockedBadge" class="hidden px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-[9px] font-bold uppercase border border-red-500/20">Hard_Locked</span>
+                        </div>
+                    </div>
+                    <div id="inputEditor" class="monaco-container"></div>
+                </div>
+
+                <div class="glass-panel p-5 relative">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <span id="outputLabel" class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Protected_Payload</span>
+                        <button onclick="copyOutput()" class="text-[10px] font-bold text-slate-400 hover:text-white transition-colors uppercase flex items-center">
+                            <i class="fa-regular fa-copy mr-2"></i> Copy_All
+                        </button>
+                    </div>
+                    <div id="outputEditor" class="monaco-container"></div>
+                    <div id="loadingOverlay" class="absolute inset-0 bg-black/80 z-50 flex items-center justify-center rounded-16 hidden backdrop-blur-sm">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 border-[3px] border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+                            <span id="loadingText" class="text-[11px] font-bold uppercase tracking-[0.3em] text-purple-400 animate-pulse">Running_Encryption</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let inputEditor, outputEditor;
+        let currentTab = 'protect';
+
+        // --- Sophisticated Loading Sequence ---
+        function startLoading() {
+            const bar = document.getElementById('loader-progress');
+            const status = document.getElementById('loader-status');
+            const steps = [
+                { p: 10, t: "ESTABLISHING_SECURE_LINK" },
+                { p: 30, t: "MOUNTING_VIRTUAL_MACHINE" },
+                { p: 55, t: "SYNCHRONIZING_OBFUSCATION_KEYS" },
+                { p: 85, t: "INJECTING_MONACO_LAYER" },
+                { p: 100, t: "SYSTEM_ONLINE" }
+            ];
+
+            let stepIdx = 0;
+            const sequence = setInterval(() => {
+                if (stepIdx < steps.length) {
+                    bar.style.width = steps[stepIdx].p + "%";
+                    status.innerText = steps[stepIdx].t;
+                    stepIdx++;
+                } else {
+                    clearInterval(sequence);
+                    setTimeout(revealApp, 600);
+                }
+            }, 600);
+        }
+
+        function revealApp() {
+            const loader = document.getElementById('master-loader');
+            const header = document.getElementById('header-reveal');
+            const sidebar = document.getElementById('sidebar-reveal');
+            const main = document.getElementById('main-reveal');
+            
+            // Fade and Slide Loader
+            loader.style.opacity = '0';
+            loader.style.transform = 'scale(1.1)';
+
+            setTimeout(() => {
+                loader.style.visibility = 'hidden';
+                
+                // Staggered reveal of app components
+                setTimeout(() => header.classList.add('active'), 0);
+                setTimeout(() => sidebar.classList.add('active'), 200);
+                setTimeout(() => main.classList.add('active'), 400);
+
+                if (inputEditor) inputEditor.layout();
+                if (outputEditor) outputEditor.layout();
+            }, 800);
+        }
+
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            startLoading();
+
+            monaco.editor.defineTheme('stealth-theme', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'comment', foreground: '6272a4', fontStyle: 'italic' },
+                    { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' },
+                    { token: 'string', foreground: 'f1fa8c' },
+                    { token: 'number', foreground: 'bd93f9' },
+                    { token: 'operator', foreground: 'ff79c6' }
+                ],
+                colors: {
+                    'editor.background': '#050507',
+                    'editor.lineHighlightBackground': '#0d0d11',
+                    'editor.selectionBackground': '#a855f733',
+                    'editorCursor.foreground': '#a855f7',
+                    'editorWhitespace.foreground': '#3b3a32',
+                    'editorLineNumber.foreground': '#334155',
+                    'editorLineNumber.activeForeground': '#a855f7'
+                }
+            });
+
+            const commonOptions = {
+                theme: 'stealth-theme',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily: "'JetBrains Mono', monospace",
+                fontLigatures: true,
+                scrollBeyondLastLine: false,
+                lineNumbers: 'on',
+                roundedSelection: true,
+                scrollbar: {
+                    vertical: 'auto',
+                    horizontal: 'auto',
+                    verticalScrollbarSize: 6,
+                    horizontalScrollbarSize: 6
+                }
+            };
+
+            inputEditor = monaco.editor.create(document.getElementById('inputEditor'), {
+                ...commonOptions,
+                value: '-- Paste your script here\nprint("Hello World")',
+                language: 'lua'
+            });
+
+            outputEditor = monaco.editor.create(document.getElementById('outputEditor'), {
+                ...commonOptions,
+                value: '',
+                language: 'lua',
+                readOnly: true
+            });
+
+            // Initial state check
+            const checkPass = () => {
+                const warning = document.getElementById('permWarning');
+                if (currentTab === 'protect' && document.getElementById('passKey').value.trim() === "") {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
+            };
+            
+            document.getElementById('passKey').addEventListener('input', checkPass);
+            checkPass();
+
+            inputEditor.onDidChangeModelContent(() => {
+                if (currentTab === 'unlock') {
+                    const val = inputEditor.getValue();
+                    const detectBadge = document.getElementById('autoDetectBadge');
+                    const lockedBadge = document.getElementById('lockedBadge');
+                    const inputWrapper = document.getElementById('inputWrapper');
+
+                    if (val.includes('lumina://')) {
+                        detectBadge.classList.remove('hidden');
+                        lockedBadge.classList.add('hidden');
+                        inputWrapper.classList.add('success-glow');
+                        inputWrapper.classList.remove('warning-glow');
+                    } else if (val.includes('"\\') && !val.includes('-- Recovery:')) {
+                        detectBadge.classList.add('hidden');
+                        lockedBadge.classList.remove('hidden');
+                        inputWrapper.classList.add('warning-glow');
+                        inputWrapper.classList.remove('success-glow');
+                    } else {
+                        detectBadge.classList.add('hidden');
+                        lockedBadge.classList.add('hidden');
+                        inputWrapper.classList.remove('success-glow', 'warning-glow');
+                    }
+                }
+            });
+
+            // Keep layout healthy during transitions
+            const layoutTick = setInterval(() => {
+                if (inputEditor) inputEditor.layout();
+                if (outputEditor) outputEditor.layout();
+            }, 100);
+            setTimeout(() => clearInterval(layoutTick), 5000);
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            const btnText = document.getElementById('btnText');
+            const outputLabel = document.getElementById('outputLabel');
+            const inputLabel = document.getElementById('inputLabel');
+            const unlockInfo = document.getElementById('unlockInfo');
+            const protectInfo = document.getElementById('protectInfo');
+            const keyLabel = document.getElementById('keyLabel');
+            const warning = document.getElementById('permWarning');
+
+            if (tab === 'unlock') {
+                btnText.innerText = 'UNLOCK NOW';
+                outputLabel.innerText = 'RECOVERED_CODE_STREAM';
+                inputLabel.innerText = 'ENCRYPTED_PAYLOAD_ENTRY';
+                keyLabel.innerText = 'MASTER_KEY_DECRYPT';
+                keyLabel.classList.add('text-purple-400');
+                unlockInfo.classList.remove('hidden');
+                protectInfo.classList.add('hidden');
+                warning.classList.add('hidden');
+                inputEditor.setValue('');
+            } else {
+                btnText.innerText = 'PROTECT SCRIPT';
+                outputLabel.innerText = 'PROTECTED_PAYLOAD';
+                inputLabel.innerText = 'SOURCE_INPUT';
+                keyLabel.innerText = 'MASTER KEY (OPTIONAL)';
+                keyLabel.classList.remove('text-purple-400');
+                unlockInfo.classList.add('hidden');
+                protectInfo.classList.remove('hidden');
+                if (document.getElementById('passKey').value === "") warning.classList.remove('hidden');
+                inputEditor.setValue('-- Paste your script here\nprint("Hello World")');
+                document.getElementById('autoDetectBadge').classList.add('hidden');
+                document.getElementById('lockedBadge').classList.add('hidden');
+                document.getElementById('inputWrapper').classList.remove('success-glow', 'warning-glow');
+            }
+            outputEditor.setValue('');
+            
+            setTimeout(() => {
+                inputEditor.layout();
+                outputEditor.layout();
+            }, 50);
+        }
+
+        async function handleProcess() {
+            const source = inputEditor.getValue();
+            const pass = document.getElementById('passKey').value || "";
+
+            if (!source.trim()) return;
+
+            const loadingText = document.getElementById('loadingText');
+            loadingText.innerText = currentTab === 'protect' ? "RUNNING_STEALTH_OBFUSCATION" : "RECOVERING_RAW_CODE_STREAM";
+
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            await new Promise(r => setTimeout(r, 1200));
+
+            try {
+                if (currentTab === 'protect') {
+                    const result = protectLuau(source, pass);
+                    outputEditor.setValue(result);
+                } else {
+                    const recovered = recoverRaw(source, pass);
+                    outputEditor.setValue(recovered);
+                }
+            } catch (err) {
+                outputEditor.setValue('-- EXCEPTION: Operation_Terminated\n-- Buffer corruption detected.');
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        function protectLuau(source, password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(source);
+            const hasPassword = password.trim() !== "";
+            const encryptionKey = hasPassword ? password : crypto.randomUUID();
+            const keyBytes = encoder.encode(encryptionKey);
+            const scrambled = Array.from(data).map((b, i) => b ^ keyBytes[i % keyBytes.length]);
+            const hexPayload = scrambled.map(b => `\\${b}`).join('');
+            
+            let output = "";
+            if (hasPassword) {
+                const b64 = btoa(hexPayload);
+                output += `-- Recovery: lumina://recover?payload=${b64}\n`;
+            } else {
+                output += `-- [PERMANENT_LOCK: RECOVERY_VECTOR_DISABLED]\n`;
+            }
+
+            output += `local _D,_K="${hexPayload}","${Array.from(keyBytes).map(b => `\\${b}`).join('')}"local function _L()local _O=""for i=1,#_D do _O=_O..string.char(bit32.bxor(_D:sub(i,i):byte(),_K:sub((i-1)%#_K+1,(i-1)%#_K+1):byte()))end local _E,_R=loadstring(_O)if _E then task.spawn(_E)end end _L()`;
+            return output;
+        }
+
+        function recoverRaw(input, password) {
+            try {
+                let hexPayload = "";
+                if (input.includes('lumina://recover?payload=')) {
+                    const b64 = input.split('payload=')[1].split(/\s/)[0].trim();
+                    hexPayload = atob(b64);
+                } else if (input.includes('"\\')) {
+                    if (!input.includes('lumina://')) {
+                        return "-- [SECURITY_FAULT] RECOVERY_DENIED\n-- No Master Key association found in bytecode header.";
+                    }
+                    const matches = input.match(/"((\\[0-9]+)+)"/);
+                    if (matches) hexPayload = matches[1];
+                }
+
+                if (!hexPayload) return "-- [FAIL] No Lumina stream detected in input buffer.";
+
+                const bytes = [];
+                const parts = hexPayload.split('\\').filter(x => x !== "");
+                for (let p of parts) bytes.push(parseInt(p));
+
+                const encryptionKey = password;
+                if (!encryptionKey) return "-- [AUTH_REQUIRED] Provide Master Key to proceed.";
+
+                const key = new TextEncoder().encode(encryptionKey);
+                const decrypted = bytes.map((b, i) => b ^ key[i % key.length]);
+                const result = new TextDecoder().decode(new Uint8Array(decrypted));
+                
+                if (result.includes('\ufffd') || !/[a-zA-Z0-9]/.test(result)) {
+                    return "-- [KEY_MISMATCH] Decryption failed. Buffer parity error.";
+                }
+
+                return result;
+            } catch (e) {
+                return "-- EXCEPTION: Link integrity compromised.";
+            }
+        }
+
+        function copyOutput() {
+            const val = outputEditor.getValue();
+            if (!val) return;
+            const textArea = document.createElement("textarea");
+            textArea.value = val;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const btn = document.querySelector('button[onclick="copyOutput()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Copied_Success';
+                setTimeout(() => btn.innerHTML = originalText, 2000);
+            } catch (err) {}
+            document.body.removeChild(textArea);
+        }
+    </script>
+</body>
+</html>
