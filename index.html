@@ -551,7 +551,7 @@
                 const b64 = btoa(binary);
                 output += `-- Recovery: lumina://rcv?p=${b64}\n`;
             } else {
-                output += `-- [PERMANENT_LOCK: RECOVERY_VECTOR_DISABLED]\n`;
+                output += `-- [PERMANENT_LOCK: RECOVERY_DISABLED]\n`;
             }
 
             output += `local _D,_K="${hexPayload}","${Array.from(keyBytes).map(b => `\\${b}`).join('')}"local function _L()local _O=""for i=1,_D:len() do _O=_O..string.char(bit32.bxor(_D:sub(i,i):byte(),_K:sub((i-1)%_K:len()+1,(i-1)%_K:len()+1):byte()))end local _E,_R=loadstring(_O)if _E then task.spawn(_E)end end _L()`;
