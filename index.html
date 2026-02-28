@@ -164,7 +164,6 @@
             border-color: rgba(239, 68, 68, 0.5) !important;
         }
 
-        /* Scanline effect for loading */
         .cyber-grid {
             position: absolute;
             top: 0;
@@ -189,7 +188,6 @@
 </head>
 <body class="min-h-screen p-4 md:p-8">
 
-    <!-- Premium Loading Screen -->
     <div id="master-loader">
         <div class="cyber-grid"></div>
         <div class="loader-glitch-wrapper">
@@ -226,7 +224,10 @@
                     <div class="relative group">
                         <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs transition-colors group-focus-within:text-purple-500"></i>
                         <input type="password" id="passKey" placeholder="Default: none" 
-                            class="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-purple-500 transition-all focus:ring-1 focus:ring-purple-500/30">
+                            class="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-10 text-sm focus:outline-none focus:border-purple-500 transition-all focus:ring-1 focus:ring-purple-500/30">
+                        <button onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-purple-400 transition-colors p-1">
+                            <i id="toggleEye" class="fa-solid fa-eye-slash text-xs"></i>
+                        </button>
                     </div>
 
                     <div id="unlockInfo" class="mt-8 pt-6 border-t border-white/5 space-y-4 hidden">
@@ -247,20 +248,6 @@
                             </p>
                             <p class="text-[10px] text-slate-500 leading-relaxed italic">Encryption key will be generated randomly and discarded. Recovery impossible.</p>
                         </div>
-                        <div class="space-y-3 px-1">
-                            <div class="flex items-center justify-between text-[11px] text-slate-400">
-                                <span>Stealth Level</span>
-                                <span class="text-purple-400 font-mono">MIL-SPEC</span>
-                            </div>
-                            <div class="flex items-center justify-between text-[11px] text-slate-400">
-                                <span>VM Wrapper</span>
-                                <span class="text-green-500 uppercase font-bold text-[9px]">Active</span>
-                            </div>
-                            <div class="flex items-center justify-between text-[11px] text-slate-400">
-                                <span>Entropy</span>
-                                <span class="text-purple-400">98.4%</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -273,10 +260,15 @@
             <main class="lg:col-span-9 space-y-6 reveal-delay" id="main-reveal">
                 <div id="inputWrapper" class="glass-panel p-5 transition-all duration-500">
                     <div class="flex items-center justify-between mb-3 px-1">
-                        <span id="inputLabel" class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Source_Input</span>
-                        <div class="flex space-x-3">
-                            <span id="autoDetectBadge" class="hidden px-2.5 py-1 rounded-full bg-green-500/10 text-green-400 text-[9px] font-bold uppercase border border-green-500/20">System_Detected</span>
-                            <span id="lockedBadge" class="hidden px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-[9px] font-bold uppercase border border-red-500/20">Hard_Locked</span>
+                        <span id="inputLabel" class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Input</span>
+                        <div class="flex items-center space-x-5">
+                            <button onclick="clearInput()" class="text-[9px] font-bold text-slate-500 hover:text-red-400 transition-colors uppercase flex items-center tracking-widest">
+                                <i class="fa-solid fa-trash-can mr-1.5"></i> Clear
+                            </button>
+                            <div class="flex space-x-3">
+                                <span id="autoDetectBadge" class="hidden px-2.5 py-1 rounded-full bg-green-500/10 text-green-400 text-[9px] font-bold uppercase border border-green-500/20">System_Detected</span>
+                                <span id="lockedBadge" class="hidden px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-[9px] font-bold uppercase border border-red-500/20">Hard_Locked</span>
+                            </div>
                         </div>
                     </div>
                     <div id="inputEditor" class="monaco-container"></div>
@@ -284,7 +276,7 @@
 
                 <div class="glass-panel p-5 relative">
                     <div class="flex items-center justify-between mb-3 px-1">
-                        <span id="outputLabel" class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Protected_Payload</span>
+                        <span id="outputLabel" class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Output</span>
                         <button onclick="copyOutput()" class="text-[10px] font-bold text-slate-400 hover:text-white transition-colors uppercase flex items-center">
                             <i class="fa-regular fa-copy mr-2"></i> Copy_All
                         </button>
@@ -305,7 +297,6 @@
         let inputEditor, outputEditor;
         let currentTab = 'protect';
 
-        // --- Sophisticated Loading Sequence ---
         function startLoading() {
             const bar = document.getElementById('loader-progress');
             const status = document.getElementById('loader-status');
@@ -336,14 +327,11 @@
             const sidebar = document.getElementById('sidebar-reveal');
             const main = document.getElementById('main-reveal');
             
-            // Fade and Slide Loader
             loader.style.opacity = '0';
             loader.style.transform = 'scale(1.1)';
 
             setTimeout(() => {
                 loader.style.visibility = 'hidden';
-                
-                // Staggered reveal of app components
                 setTimeout(() => header.classList.add('active'), 0);
                 setTimeout(() => sidebar.classList.add('active'), 200);
                 setTimeout(() => main.classList.add('active'), 400);
@@ -351,6 +339,28 @@
                 if (inputEditor) inputEditor.layout();
                 if (outputEditor) outputEditor.layout();
             }, 800);
+        }
+
+        function togglePasswordVisibility() {
+            const passKey = document.getElementById('passKey');
+            const eyeIcon = document.getElementById('toggleEye');
+            
+            if (passKey.type === 'password') {
+                passKey.type = 'text';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            } else {
+                passKey.type = 'password';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            }
+        }
+
+        function clearInput() {
+            if (inputEditor) {
+                inputEditor.setValue('');
+                if (outputEditor) outputEditor.setValue('');
+            }
         }
 
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
@@ -409,7 +419,6 @@
                 readOnly: true
             });
 
-            // Initial state check
             const checkPass = () => {
                 const warning = document.getElementById('permWarning');
                 if (currentTab === 'protect' && document.getElementById('passKey').value.trim() === "") {
@@ -447,7 +456,6 @@
                 }
             });
 
-            // Keep layout healthy during transitions
             const layoutTick = setInterval(() => {
                 if (inputEditor) inputEditor.layout();
                 if (outputEditor) outputEditor.layout();
@@ -470,8 +478,8 @@
 
             if (tab === 'unlock') {
                 btnText.innerText = 'UNLOCK NOW';
-                outputLabel.innerText = 'RECOVERED_CODE_STREAM';
-                inputLabel.innerText = 'ENCRYPTED_PAYLOAD_ENTRY';
+                outputLabel.innerText = 'Output';
+                inputLabel.innerText = 'Input';
                 keyLabel.innerText = 'MASTER_KEY_DECRYPT';
                 keyLabel.classList.add('text-purple-400');
                 unlockInfo.classList.remove('hidden');
@@ -480,8 +488,8 @@
                 inputEditor.setValue('');
             } else {
                 btnText.innerText = 'PROTECT SCRIPT';
-                outputLabel.innerText = 'PROTECTED_PAYLOAD';
-                inputLabel.innerText = 'SOURCE_INPUT';
+                outputLabel.innerText = 'Output';
+                inputLabel.innerText = 'Input';
                 keyLabel.innerText = 'MASTER KEY (OPTIONAL)';
                 keyLabel.classList.remove('text-purple-400');
                 unlockInfo.classList.add('hidden');
@@ -539,15 +547,14 @@
             
             let output = "";
             if (hasPassword) {
-                // Use Uint8Array directly for cleaner base64
                 const binary = String.fromCharCode.apply(null, scrambled);
                 const b64 = btoa(binary);
-                output += `-- Recovery or just type the whole script in: lumina://rcv?p=${b64}\n`;
+                output += `-- Recovery: lumina://rcv?p=${b64}\n`;
             } else {
                 output += `-- [PERMANENT_LOCK: RECOVERY_VECTOR_DISABLED]\n`;
             }
 
-            output += `local _D,_K="${hexPayload}","${Array.from(keyBytes).map(b => `\\${b}`).join('')}"local function _L()local _O=""for i=1,#_D do _O=_O..string.char(bit32.bxor(_D:sub(i,i):byte(),_K:sub((i-1)%#_K+1,(i-1)%#_K+1):byte()))end local _E,_R=loadstring(_O)if _E then task.spawn(_E)end end _L()`;
+            output += `local _D,_K="${hexPayload}","${Array.from(keyBytes).map(b => `\\${b}`).join('')}"local function _L()local _O=""for i=1,_D:len() do _O=_O..string.char(bit32.bxor(_D:sub(i,i):byte(),_K:sub((i-1)%_K:len()+1,(i-1)%_K:len()+1):byte()))end local _E,_R=loadstring(_O)if _E then task.spawn(_E)end end _L()`;
             return output;
         }
 
@@ -562,7 +569,7 @@
                     }
                 } else if (input.includes('"\\')) {
                     if (!input.includes('lumina://')) {
-                        return "-- [SECURITY_FAULT] RECOVERY_DENIED\n-- No Master Key association found in bytecode header.";
+                        return "WRONG KEY";
                     }
                     const matches = input.match(/"((\\[0-9]+)+)"/);
                     if (matches) {
@@ -581,13 +588,13 @@
                 const decrypted = bytes.map((b, i) => b ^ key[i % key.length]);
                 const result = new TextDecoder().decode(new Uint8Array(decrypted));
                 
-                if (result.includes('\ufffd') || !/[a-zA-Z0-9]/.test(result)) {
-                    return "-- [KEY_MISMATCH] Decryption failed. Buffer parity error.";
+                if (result.includes('\ufffd') || !/[a-zA-Z0-9\s]/.test(result)) {
+                    return "WRONG KEY";
                 }
 
                 return result;
             } catch (e) {
-                return "-- EXCEPTION: Link integrity compromised.";
+                return "WRONG KEY";
             }
         }
 
